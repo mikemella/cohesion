@@ -1,7 +1,6 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 import type { ServerToClientEvents, ClientToServerEvents } from '@cohesion/shared';
-import { verifyToken } from '../middleware/auth.js';
 
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
 
@@ -13,22 +12,8 @@ export function initSocket(httpServer: HttpServer, clientUrl: string) {
     },
   });
 
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Authentication required'));
-    }
-    try {
-      const payload = verifyToken(token);
-      (socket as any).userId = payload.userId;
-      next();
-    } catch {
-      next(new Error('Invalid token'));
-    }
-  });
-
   io.on('connection', (socket) => {
-    console.log(`User connected: ${(socket as any).userId}`);
+    console.log(`Socket connected: ${socket.id}`);
 
     socket.on('joinGame', (gameId) => {
       socket.join(`game:${gameId}`);
@@ -39,7 +24,7 @@ export function initSocket(httpServer: HttpServer, clientUrl: string) {
     });
 
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${(socket as any).userId}`);
+      console.log(`Socket disconnected: ${socket.id}`);
     });
   });
 

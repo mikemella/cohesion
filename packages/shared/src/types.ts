@@ -1,18 +1,3 @@
-// ---- User & Auth ----
-
-export interface User {
-  id: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
-  createdAt: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
-
 // ---- Game Types ----
 
 export type GameType = 'connect-four';
@@ -23,20 +8,14 @@ export interface Game {
   id: string;
   gameType: GameType;
   status: GameStatus;
-  players: GamePlayer[];
-  currentTurnUserId: string | null;
-  winnerId: string | null;
+  player1Name: string | null;
+  player2Name: string | null;
+  currentTurn: 1 | 2;
+  winner: 1 | 2 | null;
   isDraw: boolean;
   state: ConnectFourState;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface GamePlayer {
-  userId: string;
-  username: string;
-  displayName: string;
-  playerNumber: 1 | 2;
 }
 
 // ---- Connect Four ----
@@ -56,7 +35,7 @@ export interface ConnectFourState {
 export interface Move {
   id: string;
   gameId: string;
-  userId: string;
+  playerNumber: 1 | 2;
   moveNumber: number;
   moveData: { column: number };
   createdAt: string;
@@ -65,11 +44,16 @@ export interface Move {
 // ---- API Types ----
 
 export interface CreateGameRequest {
-  gameType: GameType;
+  playerName: string;
+}
+
+export interface JoinGameRequest {
+  playerName: string;
 }
 
 export interface MakeMoveRequest {
   column: number;
+  playerNumber: 1 | 2;
 }
 
 export interface ApiError {
@@ -80,9 +64,9 @@ export interface ApiError {
 
 export interface ServerToClientEvents {
   gameUpdated: (game: Game) => void;
-  playerJoined: (data: { gameId: string; player: GamePlayer }) => void;
+  playerJoined: (data: { gameId: string; playerName: string }) => void;
   moveMade: (data: { gameId: string; move: Move; game: Game }) => void;
-  gameOver: (data: { gameId: string; winnerId: string | null; isDraw: boolean }) => void;
+  gameOver: (data: { gameId: string; winner: 1 | 2 | null; isDraw: boolean }) => void;
   error: (data: { message: string }) => void;
 }
 

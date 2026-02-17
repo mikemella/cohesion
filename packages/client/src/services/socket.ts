@@ -7,11 +7,7 @@ let socket: TypedSocket | null = null;
 
 export function getSocket(): TypedSocket {
   if (!socket) {
-    const token = localStorage.getItem('token');
-    socket = io({
-      auth: { token },
-      autoConnect: false,
-    }) as TypedSocket;
+    socket = io({ autoConnect: false }) as TypedSocket;
   }
   return socket;
 }

@@ -4,7 +4,6 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import authRoutes from './routes/auth.js';
 import gameRoutes from './routes/games.js';
 import { initSocket } from './websocket/socket.js';
 
@@ -21,7 +20,6 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
 
 initSocket(httpServer, CLIENT_URL);

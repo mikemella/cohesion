@@ -8,49 +8,37 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const migration = `
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username VARCHAR(50) UNIQUE NOT NULL,
-  display_name VARCHAR(100) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  avatar_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- Drop old tables from previous auth-based schema
+DROP TABLE IF EXISTS moves CASCADE;
+DROP TABLE IF EXISTS game_participants CASCADE;
+DROP TABLE IF EXISTS games CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
-CREATE TABLE IF NOT EXISTS games (
+CREATE TABLE games (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_type VARCHAR(50) NOT NULL DEFAULT 'connect-four',
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',
-  current_turn_user_id UUID REFERENCES users(id),
-  winner_id UUID REFERENCES users(id),
+  player1_name VARCHAR(100),
+  player2_name VARCHAR(100),
+  current_turn SMALLINT NOT NULL DEFAULT 1,
+  winner SMALLINT,
   is_draw BOOLEAN DEFAULT FALSE,
   state JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS game_participants (
+CREATE TABLE moves (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id),
   player_number SMALLINT NOT NULL,
-  joined_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(game_id, user_id),
-  UNIQUE(game_id, player_number)
-);
-
-CREATE TABLE IF NOT EXISTS moves (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id),
   move_number INT NOT NULL,
   move_data JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
-CREATE INDEX IF NOT EXISTS idx_game_participants_user ON game_participants(user_id);
-CREATE INDEX IF NOT EXISTS idx_moves_game ON moves(game_id);
+CREATE INDEX idx_games_status ON games(status);
+CREATE INDEX idx_moves_game ON moves(game_id);
 `;
 
 async function migrate() {

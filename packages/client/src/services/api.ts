@@ -1,20 +1,12 @@
-import type { AuthResponse, User, Game } from '@cohesion/shared';
+import type { Game } from '@cohesion/shared';
 
 const API_BASE = '/api';
 
-function getToken(): string | null {
-  return localStorage.getItem('token');
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
@@ -27,44 +19,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  register(username: string, displayName: string, password: string) {
-    return request<AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ username, displayName, password }),
-    });
-  },
-
-  login(username: string, password: string) {
-    return request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    });
-  },
-
-  getMe() {
-    return request<User>('/auth/me');
-  },
-
-  listGames() {
-    return request<Game[]>('/games');
-  },
-
   getGame(id: string) {
     return request<Game>(`/games/${id}`);
   },
 
-  createGame() {
-    return request<Game>('/games', { method: 'POST' });
+  createGame(playerName: string) {
+    return request<Game>('/games', {
+      method: 'POST',
+      body: JSON.stringify({ playerName }),
+    });
   },
 
-  joinGame(id: string) {
-    return request<Game>(`/games/${id}/join`, { method: 'POST' });
+  joinGame(id: string, playerName: string) {
+    return request<Game>(`/games/${id}/join`, {
+      method: 'POST',
+      body: JSON.stringify({ playerName }),
+    });
   },
 
-  makeMove(gameId: string, column: number) {
+  makeMove(gameId: string, column: number, playerNumber: 1 | 2) {
     return request<Game>(`/games/${gameId}/move`, {
       method: 'POST',
-      body: JSON.stringify({ column }),
+      body: JSON.stringify({ column, playerNumber }),
     });
   },
 };
