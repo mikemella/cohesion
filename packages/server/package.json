@@ -2,7 +2,7 @@
   "name": "@cohesion/server",
   "version": "1.0.0",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --ignore '../shared/**' --ignore '../../node_modules/**' src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:migrate": "tsx src/db/migrate.ts"
