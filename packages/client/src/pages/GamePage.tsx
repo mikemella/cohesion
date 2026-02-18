@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Game } from '@cohesion/shared';
-import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS } from '@cohesion/shared';
+import type { Game, ConnectFourState, TicTacToeState } from '@cohesion/shared';
+import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS, checkTTTWin, TIC_TAC_TOE_SIZE } from '@cohesion/shared';
 import { Board } from '../components/Board';
+import { TicTacToeBoard } from '../components/TicTacToeBoard';
 import { api } from '../services/api';
 import { connectSocket, getSocket } from '../services/socket';
+
+const GAME_LABELS: Record<string, string> = {
+  'connect-four': 'Connect Four',
+  'tic-tac-toe': 'Tic-Tac-Toe',
+};
 
 export function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -28,14 +34,11 @@ export function GamePage() {
       const g = await api.getGame(id);
       setGame(g);
 
-      // If we don't have a player assignment for this game yet
       const storedPlayer = sessionStorage.getItem(`game:${id}:player`);
       if (!storedPlayer) {
         if (g.status === 'waiting') {
-          // Game is waiting — this visitor needs to join as player 2
           setNeedsJoin(true);
         } else if (g.status === 'active' || g.status === 'completed') {
-          // Game already started — spectator mode (no interaction)
           setNeedsJoin(false);
         }
       }
@@ -96,11 +99,22 @@ export function GamePage() {
     }
   };
 
-  const handleMove = async (column: number) => {
+  const handleConnectFourMove = async (column: number) => {
     if (!game || !id || !myPlayer) return;
     setError('');
     try {
-      const updatedGame = await api.makeMove(id, column, myPlayer as 1 | 2);
+      const updatedGame = await api.makeMove(id, myPlayer as 1 | 2, { column });
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleTicTacToeMove = async (row: number, col: number) => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.makeMove(id, myPlayer as 1 | 2, { row, col });
       setGame(updatedGame);
     } catch (err: any) {
       setError(err.message);
@@ -135,13 +149,15 @@ export function GamePage() {
     );
   }
 
+  const gameLabel = GAME_LABELS[game.gameType] || game.gameType;
+
   // Join form for Player 2
   if (needsJoin && game.status === 'waiting') {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Connect Four</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{gameLabel}</h1>
             <p className="text-slate-400">
               {game.player1Name} is waiting for an opponent
             </p>
@@ -174,11 +190,6 @@ export function GamePage() {
     );
   }
 
-  // Game full (someone opened the link but the game already has 2 players and they're not one of them)
-  if (!myPlayer && game.status !== 'waiting') {
-    // Spectator view
-  }
-
   const isMyTurn = myPlayer ? game.currentTurn === myPlayer : false;
   const isGameOver = game.status === 'completed';
   const isWaiting = game.status === 'waiting';
@@ -186,11 +197,25 @@ export function GamePage() {
   // Find winning cells
   let winningCells: [number, number][] = [];
   if (isGameOver && game.winner) {
-    winningCells = findWinningCells(game.state.board);
+    if (game.gameType === 'connect-four') {
+      winningCells = findConnectFourWinningCells((game.state as ConnectFourState).board);
+    } else if (game.gameType === 'tic-tac-toe') {
+      winningCells = findTicTacToeWinningCells((game.state as TicTacToeState).board);
+    }
   }
 
   const myName = myPlayer === 1 ? game.player1Name : myPlayer === 2 ? game.player2Name : null;
   const opponentName = myPlayer === 1 ? game.player2Name : myPlayer === 2 ? game.player1Name : null;
+
+  // Player piece labels
+  const playerPiece = (pNum: number) => {
+    if (game.gameType === 'tic-tac-toe') {
+      return pNum === 1
+        ? <span className="text-blue-400 font-bold">X</span>
+        : <span className="text-rose-400 font-bold">O</span>;
+    }
+    return <div className={`w-4 h-4 rounded-full ${pNum === 1 ? 'bg-red-500' : 'bg-yellow-400'}`} />;
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -280,7 +305,7 @@ export function GamePage() {
                   : 'bg-slate-800'
               }`}
             >
-              <div className={`w-4 h-4 rounded-full ${pNum === 1 ? 'bg-red-500' : 'bg-yellow-400'}`} />
+              {playerPiece(pNum)}
               <span className="font-medium">
                 {name}
                 {pNum === myPlayer && <span className="text-slate-500 text-sm"> (you)</span>}
@@ -290,16 +315,30 @@ export function GamePage() {
         })}
       </div>
 
-      {/* Board */}
-      <Board
-        board={game.state.board}
-        currentPlayer={game.state.currentPlayer}
-        isMyTurn={isMyTurn}
-        myPlayerNumber={myPlayer as 1 | 2 | null || null}
-        onColumnClick={handleMove}
-        winningCells={winningCells}
-        disabled={isGameOver || isWaiting || !myPlayer}
-      />
+      {/* Board — render the right one for the game type */}
+      {game.gameType === 'connect-four' && (
+        <Board
+          board={(game.state as ConnectFourState).board}
+          currentPlayer={(game.state as ConnectFourState).currentPlayer}
+          isMyTurn={isMyTurn}
+          myPlayerNumber={myPlayer as 1 | 2 | null || null}
+          onColumnClick={handleConnectFourMove}
+          winningCells={winningCells}
+          disabled={isGameOver || isWaiting || !myPlayer}
+        />
+      )}
+
+      {game.gameType === 'tic-tac-toe' && (
+        <TicTacToeBoard
+          board={(game.state as TicTacToeState).board}
+          currentPlayer={(game.state as TicTacToeState).currentPlayer}
+          isMyTurn={isMyTurn}
+          myPlayerNumber={myPlayer as 1 | 2 | null || null}
+          onCellClick={handleTicTacToeMove}
+          winningCells={winningCells}
+          disabled={isGameOver || isWaiting || !myPlayer}
+        />
+      )}
 
       {error && <p className="mt-4 text-red-400">{error}</p>}
 
@@ -316,7 +355,7 @@ export function GamePage() {
 }
 
 /** Scan the board to find all cells that are part of a 4-in-a-row. */
-function findWinningCells(board: import('@cohesion/shared').Board): [number, number][] {
+function findConnectFourWinningCells(board: import('@cohesion/shared').Board): [number, number][] {
   const cells: [number, number][] = [];
   for (let r = 0; r < CONNECT_FOUR_ROWS; r++) {
     for (let c = 0; c < CONNECT_FOUR_COLS; c++) {
@@ -349,4 +388,44 @@ function findWinningCells(board: import('@cohesion/shared').Board): [number, num
     }
   }
   return cells;
+}
+
+/** Find winning cells for tic-tac-toe (a complete row, column, or diagonal). */
+function findTicTacToeWinningCells(board: import('@cohesion/shared').TicTacToeBoard): [number, number][] {
+  for (let r = 0; r < TIC_TAC_TOE_SIZE; r++) {
+    for (let c = 0; c < TIC_TAC_TOE_SIZE; c++) {
+      if (board[r][c] !== 0 && checkTTTWin(board, r, c)) {
+        const player = board[r][c];
+        // Check which line(s) won
+        const cells: [number, number][] = [];
+
+        // Row
+        if (board[r].every(cell => cell === player)) {
+          for (let i = 0; i < TIC_TAC_TOE_SIZE; i++) cells.push([r, i]);
+        }
+        // Column
+        if (board.every(row => row[c] === player)) {
+          for (let i = 0; i < TIC_TAC_TOE_SIZE; i++) {
+            if (!cells.some(([cr, cc]) => cr === i && cc === c)) cells.push([i, c]);
+          }
+        }
+        // Main diagonal
+        if (r === c && board.every((row, i) => row[i] === player)) {
+          for (let i = 0; i < TIC_TAC_TOE_SIZE; i++) {
+            if (!cells.some(([cr, cc]) => cr === i && cc === i)) cells.push([i, i]);
+          }
+        }
+        // Anti-diagonal
+        if (r + c === TIC_TAC_TOE_SIZE - 1 && board.every((row, i) => row[TIC_TAC_TOE_SIZE - 1 - i] === player)) {
+          for (let i = 0; i < TIC_TAC_TOE_SIZE; i++) {
+            const ac = TIC_TAC_TOE_SIZE - 1 - i;
+            if (!cells.some(([cr, cc]) => cr === i && cc === ac)) cells.push([i, ac]);
+          }
+        }
+
+        if (cells.length > 0) return cells;
+      }
+    }
+  }
+  return [];
 }

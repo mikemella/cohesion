@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { createInitialState, applyMove, isValidMove } from '@cohesion/shared';
-import type { ConnectFourState } from '@cohesion/shared';
+import {
+  createInitialState, applyMove, isValidMove,
+  createTTTInitialState, applyTTTMove, isTTTValidMove,
+} from '@cohesion/shared';
+import type { GameType, ConnectFourState, TicTacToeState } from '@cohesion/shared';
 import { getIO } from '../websocket/socket.js';
 import * as store from '../db/store.js';
 
@@ -18,14 +21,20 @@ router.get('/:id', async (req: Request<{ id: string }>, res: Response) => {
 
 // Create a new game
 router.post('/', async (req: Request, res: Response) => {
-  const { playerName } = req.body;
+  const { playerName, gameType = 'connect-four' } = req.body;
   if (!playerName || typeof playerName !== 'string' || !playerName.trim()) {
     res.status(400).json({ error: 'playerName is required' });
     return;
   }
 
-  const initialState = createInitialState();
-  const game = store.createGame(playerName.trim(), initialState);
+  const validTypes: GameType[] = ['connect-four', 'tic-tac-toe'];
+  if (!validTypes.includes(gameType)) {
+    res.status(400).json({ error: `Invalid gameType. Must be one of: ${validTypes.join(', ')}` });
+    return;
+  }
+
+  const initialState = gameType === 'tic-tac-toe' ? createTTTInitialState() : createInitialState();
+  const game = store.createGame(playerName.trim(), gameType, initialState);
   res.status(201).json(game);
 });
 
@@ -56,12 +65,8 @@ router.post('/:id/join', async (req: Request<{ id: string }>, res: Response) => 
 // Make a move
 router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => {
   const gameId = req.params.id;
-  const { column, playerNumber } = req.body;
+  const { playerNumber } = req.body;
 
-  if (typeof column !== 'number') {
-    res.status(400).json({ error: 'column is required and must be a number' });
-    return;
-  }
   if (playerNumber !== 1 && playerNumber !== 2) {
     res.status(400).json({ error: 'playerNumber must be 1 or 2' });
     return;
@@ -78,13 +83,38 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
     return;
   }
 
-  if (!isValidMove(game.state.board, column)) {
-    res.status(400).json({ error: 'Invalid move' });
-    return;
+  let result: { state: any; isWin: boolean; isDraw: boolean };
+  let moveData: Record<string, number>;
+
+  if (game.gameType === 'tic-tac-toe') {
+    const { row, col } = req.body;
+    if (typeof row !== 'number' || typeof col !== 'number') {
+      res.status(400).json({ error: 'row and col are required for tic-tac-toe' });
+      return;
+    }
+    const state = game.state as TicTacToeState;
+    if (!isTTTValidMove(state.board, row, col)) {
+      res.status(400).json({ error: 'Invalid move' });
+      return;
+    }
+    result = applyTTTMove(state, row, col);
+    moveData = { row, col };
+  } else {
+    const { column } = req.body;
+    if (typeof column !== 'number') {
+      res.status(400).json({ error: 'column is required for connect-four' });
+      return;
+    }
+    const state = game.state as ConnectFourState;
+    if (!isValidMove(state.board, column)) {
+      res.status(400).json({ error: 'Invalid move' });
+      return;
+    }
+    result = applyMove(state, column);
+    moveData = { column };
   }
 
-  const result = applyMove(game.state, column);
-  const move = store.recordMove(gameId, playerNumber, column);
+  const move = store.recordMove(gameId, playerNumber, moveData);
 
   let newStatus: 'active' | 'completed' = 'active';
   let winner: 1 | 2 | null = null;

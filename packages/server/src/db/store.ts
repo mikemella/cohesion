@@ -1,15 +1,15 @@
 import { randomUUID } from 'crypto';
-import type { Game, Move, ConnectFourState } from '@cohesion/shared';
+import type { Game, Move, GameType, GameState } from '@cohesion/shared';
 
 // In-memory game storage — no database required
 const games = new Map<string, Game>();
 const moves = new Map<string, Move[]>(); // gameId -> moves
 
-export function createGame(playerName: string, initialState: ConnectFourState): Game {
+export function createGame(playerName: string, gameType: GameType, initialState: GameState): Game {
   const now = new Date().toISOString();
   const game: Game = {
     id: randomUUID(),
-    gameType: 'connect-four',
+    gameType,
     status: 'waiting',
     player1Name: playerName,
     player2Name: null,
@@ -42,7 +42,7 @@ export function joinGame(id: string, playerName: string): Game | null {
 export function recordMove(
   gameId: string,
   playerNumber: 1 | 2,
-  column: number
+  moveData: Record<string, number>
 ): Move {
   const gameMoves = moves.get(gameId) ?? [];
   const move: Move = {
@@ -50,7 +50,7 @@ export function recordMove(
     gameId,
     playerNumber,
     moveNumber: gameMoves.length + 1,
-    moveData: { column },
+    moveData,
     createdAt: new Date().toISOString(),
   };
   gameMoves.push(move);

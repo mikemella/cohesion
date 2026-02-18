@@ -1,8 +1,10 @@
 // ---- Game Types ----
 
-export type GameType = 'connect-four';
+export type GameType = 'connect-four' | 'tic-tac-toe';
 
 export type GameStatus = 'waiting' | 'active' | 'completed' | 'abandoned';
+
+export type GameState = ConnectFourState | TicTacToeState;
 
 export interface Game {
   id: string;
@@ -13,7 +15,7 @@ export interface Game {
   currentTurn: 1 | 2;
   winner: 1 | 2 | null;
   isDraw: boolean;
-  state: ConnectFourState;
+  state: GameState;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,14 +39,27 @@ export interface Move {
   gameId: string;
   playerNumber: 1 | 2;
   moveNumber: number;
-  moveData: { column: number };
+  moveData: Record<string, number>;
   createdAt: string;
+}
+
+// ---- Tic-Tac-Toe ----
+
+export const TIC_TAC_TOE_SIZE = 3;
+
+export type TicTacToeCell = 0 | 1 | 2;
+export type TicTacToeBoard = TicTacToeCell[][];
+
+export interface TicTacToeState {
+  board: TicTacToeBoard;
+  currentPlayer: 1 | 2;
 }
 
 // ---- API Types ----
 
 export interface CreateGameRequest {
   playerName: string;
+  gameType?: GameType;
 }
 
 export interface JoinGameRequest {
@@ -52,8 +67,10 @@ export interface JoinGameRequest {
 }
 
 export interface MakeMoveRequest {
-  column: number;
   playerNumber: 1 | 2;
+  column?: number;
+  row?: number;
+  col?: number;
 }
 
 export interface ApiError {

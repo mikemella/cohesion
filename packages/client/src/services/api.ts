@@ -1,4 +1,4 @@
-import type { Game } from '@cohesion/shared';
+import type { Game, GameType } from '@cohesion/shared';
 
 const API_BASE = '/api';
 
@@ -23,10 +23,10 @@ export const api = {
     return request<Game>(`/games/${id}`);
   },
 
-  createGame(playerName: string) {
+  createGame(playerName: string, gameType: GameType = 'connect-four') {
     return request<Game>('/games', {
       method: 'POST',
-      body: JSON.stringify({ playerName }),
+      body: JSON.stringify({ playerName, gameType }),
     });
   },
 
@@ -37,10 +37,10 @@ export const api = {
     });
   },
 
-  makeMove(gameId: string, column: number, playerNumber: 1 | 2) {
+  makeMove(gameId: string, playerNumber: 1 | 2, moveData: Record<string, number>) {
     return request<Game>(`/games/${gameId}/move`, {
       method: 'POST',
-      body: JSON.stringify({ column, playerNumber }),
+      body: JSON.stringify({ playerNumber, ...moveData }),
     });
   },
 };
