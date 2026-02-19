@@ -1,5 +1,5 @@
 {
   "framework": "vite",
-  "buildCommand": "cd packages/client && npx vite build",
-  "outputDirectory": "packages/client/dist"
+  "buildCommand": "npx vite build",
+  "outputDirectory": "dist"
 }
