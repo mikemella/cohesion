@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npm run build -w packages/shared && npm run build -w packages/client",
+  "framework": "vite",
+  "buildCommand": "cd packages/client && npx vite build",
   "outputDirectory": "packages/client/dist"
 }
