@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Game, ConnectFourState, TicTacToeState } from '@cohesion/shared';
+import type { Game, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
 import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS, checkTTTWin, TIC_TAC_TOE_SIZE } from '@cohesion/shared';
 import { Board } from '../components/Board';
 import { TicTacToeBoard } from '../components/TicTacToeBoard';
+import { DotsBoard } from '../components/DotsBoard';
 import { api } from '../services/api';
 import { connectSocket, getSocket } from '../services/socket';
 
 const GAME_LABELS: Record<string, string> = {
   'connect-four': 'Connect Four',
   'tic-tac-toe': 'Tic-Tac-Toe',
+  'dots': 'Dots & Boxes',
 };
 
 export function GamePage() {
@@ -121,6 +123,17 @@ export function GamePage() {
     }
   };
 
+  const handleDotsMove = async (orientation: number, row: number, col: number) => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.makeMove(id, myPlayer as 1 | 2, { orientation, row, col });
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -214,6 +227,9 @@ export function GamePage() {
         ? <span className="text-blue-400 font-bold">X</span>
         : <span className="text-rose-400 font-bold">O</span>;
     }
+    if (game.gameType === 'dots') {
+      return <div className={`w-4 h-4 rounded ${pNum === 1 ? 'bg-blue-500' : 'bg-rose-500'}`} />;
+    }
     return <div className={`w-4 h-4 rounded-full ${pNum === 1 ? 'bg-red-500' : 'bg-yellow-400'}`} />;
   };
 
@@ -257,7 +273,7 @@ export function GamePage() {
                   {game.currentTurn === 1 ? game.player1Name : game.player2Name}'s turn
                 </span>
               ) : isMyTurn ? (
-                <span className="text-green-400">Your turn!</span>
+                <span className="text-green-400">Your turn!{game.gameType === 'dots' && isMyTurn && game.currentTurn === myPlayer ? '' : ''}</span>
               ) : (
                 <span className="text-slate-300">
                   Waiting for {opponentName || 'opponent'}...
@@ -309,6 +325,11 @@ export function GamePage() {
               <span className="font-medium">
                 {name}
                 {pNum === myPlayer && <span className="text-slate-500 text-sm"> (you)</span>}
+                {game.gameType === 'dots' && (
+                  <span className="text-slate-400 text-sm ml-1">
+                    — {(game.state as DotsState).scores[pNum - 1]} boxes
+                  </span>
+                )}
               </span>
             </div>
           );
@@ -336,6 +357,16 @@ export function GamePage() {
           myPlayerNumber={myPlayer as 1 | 2 | null || null}
           onCellClick={handleTicTacToeMove}
           winningCells={winningCells}
+          disabled={isGameOver || isWaiting || !myPlayer}
+        />
+      )}
+
+      {game.gameType === 'dots' && (
+        <DotsBoard
+          state={game.state as DotsState}
+          isMyTurn={isMyTurn}
+          myPlayerNumber={myPlayer as 1 | 2 | null || null}
+          onLineClick={handleDotsMove}
           disabled={isGameOver || isWaiting || !myPlayer}
         />
       )}

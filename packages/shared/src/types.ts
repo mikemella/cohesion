@@ -1,10 +1,10 @@
 // ---- Game Types ----
 
-export type GameType = 'connect-four' | 'tic-tac-toe';
+export type GameType = 'connect-four' | 'tic-tac-toe' | 'dots';
 
 export type GameStatus = 'waiting' | 'active' | 'completed' | 'abandoned';
 
-export type GameState = ConnectFourState | TicTacToeState;
+export type GameState = ConnectFourState | TicTacToeState | DotsState;
 
 export interface Game {
   id: string;
@@ -52,6 +52,20 @@ export type TicTacToeBoard = TicTacToeCell[][];
 
 export interface TicTacToeState {
   board: TicTacToeBoard;
+  currentPlayer: 1 | 2;
+}
+
+// ---- Dots and Boxes ----
+
+export const DOTS_GRID_SIZE = 5; // 5x5 dots → 4x4 boxes
+
+// horizontalLines[row][col]: line from dot(row,col) to dot(row,col+1)
+// verticalLines[row][col]: line from dot(row,col) to dot(row+1,col)
+export interface DotsState {
+  horizontalLines: boolean[][]; // DOTS_GRID_SIZE rows × (DOTS_GRID_SIZE-1) cols
+  verticalLines: boolean[][];   // (DOTS_GRID_SIZE-1) rows × DOTS_GRID_SIZE cols
+  boxes: (0 | 1 | 2)[][];      // (DOTS_GRID_SIZE-1) × (DOTS_GRID_SIZE-1)
+  scores: [number, number];     // [player1, player2]
   currentPlayer: 1 | 2;
 }
 

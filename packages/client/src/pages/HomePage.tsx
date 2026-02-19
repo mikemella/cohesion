@@ -26,6 +26,13 @@ const GAMES: GameInfo[] = [
     players: '2 players',
     preview: <ConnectFourPreview />,
   },
+  {
+    type: 'dots',
+    name: 'Dots & Boxes',
+    description: 'Draw lines to claim boxes — most boxes wins',
+    players: '2 players',
+    preview: <DotsPreview />,
+  },
 ];
 
 export function HomePage() {
@@ -62,7 +69,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-3xl">
         <div className="text-center mb-10">
           <h1 className="text-5xl font-bold text-white mb-3">Cohesion</h1>
           <p className="text-slate-400 text-lg">Workplace Gaming Platform</p>
@@ -71,7 +78,7 @@ export function HomePage() {
         {!selectedGame ? (
           <>
             <h2 className="text-xl font-semibold text-slate-300 text-center mb-6">Choose a game</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {GAMES.map((game) => (
                 <button
                   key={game.type}
@@ -179,6 +186,55 @@ function ConnectFourPreview() {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function DotsPreview() {
+  // Mini dots-and-boxes: 3x3 dots (2x2 boxes) with some lines and a claimed box
+  // h[row][col], v[row][col], boxes[row][col]
+  const hLines = [[true, true], [false, true], [true, true]];
+  const vLines = [[true, false], [true, true]];
+  const boxes = [[1, 0], [0, 0]];
+
+  const dotSize = 'w-1.5 h-1.5';
+  const hLineW = 'w-5';
+  const vLineH = 'h-5';
+
+  return (
+    <div className="flex flex-col gap-0 items-center">
+      {[0, 1, 2].map(r => (
+        <div key={`r${r}`}>
+          {/* Dot row */}
+          <div className="flex items-center gap-0">
+            {[0, 1, 2].map(c => (
+              <div key={`d${r}${c}`} className="flex items-center">
+                <div className={`${dotSize} rounded-full bg-slate-300`} />
+                {c < 2 && (
+                  <div className={`${hLineW} h-1 rounded-sm ${hLines[r][c] ? 'bg-slate-300' : 'bg-slate-700'}`} />
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Vertical + box row */}
+          {r < 2 && (
+            <div className="flex items-center gap-0">
+              {[0, 1, 2].map(c => (
+                <div key={`v${r}${c}`} className="flex items-center">
+                  <div className={`w-1.5 ${vLineH} rounded-sm ${vLines[r][c] ? 'bg-slate-300' : 'bg-slate-700'}`} />
+                  {c < 2 && (
+                    <div className={`${hLineW} ${vLineH} rounded-sm text-[8px] font-bold flex items-center justify-center ${
+                      boxes[r][c] === 1 ? 'bg-blue-500/20' : boxes[r][c] === 2 ? 'bg-rose-500/20' : ''
+                    }`}>
+                      {boxes[r][c] === 1 && <span className="text-blue-400">1</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

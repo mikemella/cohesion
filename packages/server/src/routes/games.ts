@@ -2,8 +2,9 @@ import { Router, Request, Response } from 'express';
 import {
   createInitialState, applyMove, isValidMove,
   createTTTInitialState, applyTTTMove, isTTTValidMove,
+  createDotsInitialState, applyDotsMove, isDotsValidMove,
 } from '@cohesion/shared';
-import type { GameType, ConnectFourState, TicTacToeState } from '@cohesion/shared';
+import type { GameType, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
 import { getIO } from '../websocket/socket.js';
 import * as store from '../db/store.js';
 
@@ -27,13 +28,16 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
 
-  const validTypes: GameType[] = ['connect-four', 'tic-tac-toe'];
+  const validTypes: GameType[] = ['connect-four', 'tic-tac-toe', 'dots'];
   if (!validTypes.includes(gameType)) {
     res.status(400).json({ error: `Invalid gameType. Must be one of: ${validTypes.join(', ')}` });
     return;
   }
 
-  const initialState = gameType === 'tic-tac-toe' ? createTTTInitialState() : createInitialState();
+  const initialState =
+    gameType === 'tic-tac-toe' ? createTTTInitialState() :
+    gameType === 'dots' ? createDotsInitialState() :
+    createInitialState();
   const game = store.createGame(playerName.trim(), gameType, initialState);
   res.status(201).json(game);
 });
@@ -86,7 +90,28 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
   let result: { state: any; isWin: boolean; isDraw: boolean };
   let moveData: Record<string, number>;
 
-  if (game.gameType === 'tic-tac-toe') {
+  if (game.gameType === 'dots') {
+    const { orientation, row, col } = req.body;
+    if (typeof orientation !== 'number' || typeof row !== 'number' || typeof col !== 'number') {
+      res.status(400).json({ error: 'orientation, row, and col are required for dots' });
+      return;
+    }
+    const state = game.state as DotsState;
+    if (!isDotsValidMove(state, orientation, row, col)) {
+      res.status(400).json({ error: 'Invalid move' });
+      return;
+    }
+    const dotsResult = applyDotsMove(state, orientation, row, col);
+    // For dots, the winner is determined by scores, not by the moving player
+    if (dotsResult.isWin) {
+      const winner = dotsResult.state.currentPlayer; // set to the winner in applyDotsMove
+      result = dotsResult;
+      // Override: the server will use the winner from result.state.currentPlayer
+    } else {
+      result = dotsResult;
+    }
+    moveData = { orientation, row, col };
+  } else if (game.gameType === 'tic-tac-toe') {
     const { row, col } = req.body;
     if (typeof row !== 'number' || typeof col !== 'number') {
       res.status(400).json({ error: 'row and col are required for tic-tac-toe' });
@@ -121,7 +146,8 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
 
   if (result.isWin) {
     newStatus = 'completed';
-    winner = playerNumber;
+    // For dots, the winner is the player with more boxes (stored in state.currentPlayer by applyDotsMove)
+    winner = game.gameType === 'dots' ? result.state.currentPlayer : playerNumber;
   } else if (result.isDraw) {
     newStatus = 'completed';
   }
