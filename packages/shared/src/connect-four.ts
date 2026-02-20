@@ -1,4 +1,4 @@
-import { Board, CellValue, ConnectFourState, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS } from './types';
+import { Board, CellValue, ConnectFourState, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS } from './types.js';
 
 export function createEmptyBoard(): Board {
   return Array.from({ length: CONNECT_FOUR_ROWS }, () =>

@@ -1,4 +1,4 @@
-import { DotsState, DOTS_GRID_SIZE } from './types';
+import { DotsState, DOTS_GRID_SIZE } from './types.js';
 
 const BOXES = DOTS_GRID_SIZE - 1; // 4x4 boxes
 

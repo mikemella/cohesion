@@ -1,6 +1,7 @@
 {
   "name": "@cohesion/server",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch --ignore '../shared/**' --ignore '../../node_modules/**' src/index.ts",
     "build": "tsc",

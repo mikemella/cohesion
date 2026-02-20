@@ -1,4 +1,4 @@
-import { TicTacToeBoard, TicTacToeState, TIC_TAC_TOE_SIZE } from './types';
+import { TicTacToeBoard, TicTacToeState, TIC_TAC_TOE_SIZE } from './types.js';
 
 export function createTTTInitialState(): TicTacToeState {
   return {
