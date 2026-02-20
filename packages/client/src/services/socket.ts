@@ -7,7 +7,7 @@ let socket: TypedSocket | null = null;
 
 export function getSocket(): TypedSocket {
   if (!socket) {
-    socket = io({ autoConnect: false }) as TypedSocket;
+    socket = io(import.meta.env.VITE_API_URL || '/', { autoConnect: false }) as TypedSocket;
   }
   return socket;
 }
