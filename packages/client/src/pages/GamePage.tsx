@@ -55,6 +55,13 @@ export function GamePage() {
     fetchGame();
   }, [fetchGame]);
 
+  // Request notification permission once we know which player we are
+  useEffect(() => {
+    if (myPlayer && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [myPlayer]);
+
   // WebSocket
   useEffect(() => {
     if (!id) return;
@@ -64,10 +71,22 @@ export function GamePage() {
 
     socket.on('moveMade', ({ game: updatedGame }) => {
       setGame(updatedGame);
+      if (myPlayer && updatedGame.currentTurn === myPlayer && Notification.permission === 'granted') {
+        new Notification("It's your turn!", {
+          body: 'Your opponent made a move. Go play!',
+          icon: '/favicon.ico',
+        });
+      }
     });
 
     socket.on('gameUpdated', (updatedGame) => {
       setGame(updatedGame);
+      if (myPlayer && updatedGame.currentTurn === myPlayer && Notification.permission === 'granted') {
+        new Notification("It's your turn!", {
+          body: 'Your opponent made a move. Go play!',
+          icon: '/favicon.ico',
+        });
+      }
     });
 
     socket.on('playerJoined', () => {
