@@ -23,6 +23,14 @@ export function initSocket(httpServer: HttpServer, clientUrl: string) {
       socket.leave(`game:${gameId}`);
     });
 
+    socket.on('joinTournament', (tournamentId) => {
+      socket.join(`tournament:${tournamentId}`);
+    });
+
+    socket.on('leaveTournament', (tournamentId) => {
+      socket.leave(`tournament:${tournamentId}`);
+    });
+
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.id}`);
     });

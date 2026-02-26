@@ -91,6 +91,69 @@ export interface ApiError {
   error: string;
 }
 
+// ---- Tournament Types ----
+
+export type TournamentFormat = 'single-elimination' | 'double-elimination';
+
+export type TournamentStatus = 'waiting' | 'active' | 'completed';
+
+export type MatchStatus = 'pending' | 'active' | 'completed' | 'bye';
+
+export type BracketSide = 'winners' | 'losers';
+
+export interface Tournament {
+  id: string;
+  name: string;
+  gameType: GameType;
+  format: TournamentFormat;
+  status: TournamentStatus;
+  hostSessionId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TournamentParticipant {
+  id: string;
+  tournamentId: string;
+  playerName: string;
+  sessionId: string;
+  seed: number | null;
+  joinedAt: string;
+}
+
+export interface TournamentMatch {
+  id: string;
+  tournamentId: string;
+  gameId: string | null;
+  round: number;
+  matchIndex: number;
+  player1ParticipantId: string | null;
+  player2ParticipantId: string | null;
+  winnerId: string | null;
+  status: MatchStatus;
+  bracket: BracketSide;
+}
+
+export interface TournamentDetails {
+  tournament: Tournament;
+  participants: TournamentParticipant[];
+  matches: TournamentMatch[];
+}
+
+// ---- Tournament API Types ----
+
+export interface CreateTournamentRequest {
+  hostName: string;
+  tournamentName: string;
+  gameType: GameType;
+  format: TournamentFormat;
+}
+
+export interface JoinTournamentRequest {
+  playerName: string;
+  sessionId: string;
+}
+
 // ---- WebSocket Events ----
 
 export interface ServerToClientEvents {
@@ -99,9 +162,13 @@ export interface ServerToClientEvents {
   moveMade: (data: { gameId: string; move: Move; game: Game }) => void;
   gameOver: (data: { gameId: string; winner: 1 | 2 | null; isDraw: boolean }) => void;
   error: (data: { message: string }) => void;
+  tournamentUpdated: (data: TournamentDetails) => void;
+  participantJoined: (data: { tournamentId: string; participant: TournamentParticipant }) => void;
 }
 
 export interface ClientToServerEvents {
   joinGame: (gameId: string) => void;
   leaveGame: (gameId: string) => void;
+  joinTournament: (tournamentId: string) => void;
+  leaveTournament: (tournamentId: string) => void;
 }

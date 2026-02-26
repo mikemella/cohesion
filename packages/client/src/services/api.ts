@@ -1,4 +1,12 @@
-import type { Game, GameType } from '@cohesion/shared';
+import type {
+  Game,
+  GameType,
+  TournamentDetails,
+  TournamentParticipant,
+  Tournament,
+  TournamentFormat,
+} from '@cohesion/shared';
+import { getSessionId } from './session.js';
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
@@ -18,6 +26,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   return res.json();
+}
+
+function withSession(options: RequestInit = {}): RequestInit {
+  return {
+    ...options,
+    headers: {
+      ...((options.headers as Record<string, string>) || {}),
+      'X-Session-Id': getSessionId(),
+    },
+  };
 }
 
 export const api = {
@@ -44,5 +62,50 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ playerNumber, ...moveData }),
     });
+  },
+
+  // ---- Tournament API ----
+
+  createTournament(
+    hostName: string,
+    tournamentName: string,
+    gameType: GameType,
+    format: TournamentFormat
+  ) {
+    return request<{ tournament: Tournament; participant: TournamentParticipant }>(
+      '/tournaments',
+      withSession({
+        method: 'POST',
+        body: JSON.stringify({ hostName, tournamentName, gameType, format }),
+      })
+    );
+  },
+
+  getTournament(id: string) {
+    return request<TournamentDetails>(`/tournaments/${id}`);
+  },
+
+  joinTournament(id: string, playerName: string) {
+    return request<{ participant: TournamentParticipant; tournament: Tournament }>(
+      `/tournaments/${id}/join`,
+      withSession({
+        method: 'POST',
+        body: JSON.stringify({ playerName }),
+      })
+    );
+  },
+
+  launchTournament(id: string) {
+    return request<TournamentDetails>(
+      `/tournaments/${id}/launch`,
+      withSession({ method: 'POST' })
+    );
+  },
+
+  startMatch(tournamentId: string, matchId: string) {
+    return request<{ match: import('@cohesion/shared').TournamentMatch; game: Game }>(
+      `/tournaments/${tournamentId}/matches/${matchId}/start`,
+      withSession({ method: 'POST' })
+    );
   },
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Game, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
 import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS, checkTTTWin, TIC_TAC_TOE_SIZE } from '@cohesion/shared';
 import { Board } from '../components/Board';
@@ -17,6 +17,8 @@ const GAME_LABELS: Record<string, string> = {
 export function GamePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get('tournamentId');
   const [game, setGame] = useState<Game | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -393,12 +395,21 @@ export function GamePage() {
       {error && <p className="mt-4 text-red-400">{error}</p>}
 
       {isGameOver && (
-        <button
-          onClick={() => navigate('/')}
-          className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-        >
-          New Game
-        </button>
+        tournamentId ? (
+          <button
+            onClick={() => navigate(`/tournament/${tournamentId}`)}
+            className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
+          >
+            Return to Tournament
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate('/')}
+            className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+          >
+            New Game
+          </button>
+        )
       )}
     </div>
   );

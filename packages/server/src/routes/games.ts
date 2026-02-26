@@ -7,6 +7,7 @@ import {
 import type { GameType, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
 import { getIO } from '../websocket/socket.js';
 import * as store from '../db/store.js';
+import * as tournamentStore from '../db/tournament-store.js';
 
 const router = Router();
 
@@ -173,6 +174,23 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
       winner,
       isDraw: result.isDraw,
     });
+
+    // Tournament bracket advancement hook
+    if (result.isWin && winner !== null) {
+      try {
+        const match = await tournamentStore.getMatchByGameId(gameId);
+        if (match) {
+          const winnerParticipantId =
+            winner === 1 ? match.player1ParticipantId : match.player2ParticipantId;
+          if (winnerParticipantId) {
+            const updatedDetails = await tournamentStore.advanceBracket(match, winnerParticipantId);
+            io.to(`tournament:${match.tournamentId}`).emit('tournamentUpdated', updatedDetails);
+          }
+        }
+      } catch (err) {
+        console.error('Tournament bracket advancement failed:', err);
+      }
+    }
   }
 
   res.json(updatedGame);

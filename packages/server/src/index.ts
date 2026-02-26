@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import gameRoutes from './routes/games.js';
+import tournamentRoutes from './routes/tournaments.js';
 import { initSocket } from './websocket/socket.js';
 
 const app = express();
@@ -21,6 +22,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/games', gameRoutes);
+app.use('/api/tournaments', tournamentRoutes);
 
 initSocket(httpServer, CLIENT_URL);
 
