@@ -8,16 +8,7 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const migration = `
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Drop old tables from previous auth-based schema
-DROP TABLE IF EXISTS tournament_matches CASCADE;
-DROP TABLE IF EXISTS tournament_participants CASCADE;
-DROP TABLE IF EXISTS tournaments CASCADE;
-DROP TABLE IF EXISTS moves CASCADE;
-DROP TABLE IF EXISTS game_participants CASCADE;
-DROP TABLE IF EXISTS games CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
-CREATE TABLE games (
+CREATE TABLE IF NOT EXISTS games (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_type VARCHAR(50) NOT NULL DEFAULT 'connect-four',
   status VARCHAR(20) NOT NULL DEFAULT 'waiting',
@@ -31,7 +22,7 @@ CREATE TABLE games (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE moves (
+CREATE TABLE IF NOT EXISTS moves (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_number SMALLINT NOT NULL,
@@ -40,10 +31,10 @@ CREATE TABLE moves (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_games_status ON games(status);
-CREATE INDEX idx_moves_game ON moves(game_id);
+CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
+CREATE INDEX IF NOT EXISTS idx_moves_game ON moves(game_id);
 
-CREATE TABLE tournaments (
+CREATE TABLE IF NOT EXISTS tournaments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(200) NOT NULL,
   game_type VARCHAR(50) NOT NULL,
@@ -54,7 +45,7 @@ CREATE TABLE tournaments (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE tournament_participants (
+CREATE TABLE IF NOT EXISTS tournament_participants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
   player_name VARCHAR(100) NOT NULL,
@@ -63,7 +54,7 @@ CREATE TABLE tournament_participants (
   joined_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE tournament_matches (
+CREATE TABLE IF NOT EXISTS tournament_matches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tournament_id UUID NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
   game_id UUID,
@@ -77,9 +68,9 @@ CREATE TABLE tournament_matches (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_tournament_matches_tournament ON tournament_matches(tournament_id);
-CREATE INDEX idx_tournament_matches_game ON tournament_matches(game_id);
-CREATE INDEX idx_tournament_participants_tournament ON tournament_participants(tournament_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_matches_tournament ON tournament_matches(tournament_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_matches_game ON tournament_matches(game_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_participants_tournament ON tournament_participants(tournament_id);
 `;
 
 async function migrate() {
