@@ -1,9 +1,19 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #4AE688;
+  --color-brand-hover: #3DD677;
+  --color-brand-dim: rgba(74, 230, 136, 0.1);
+}
+
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: #0d1120;
+  color: #e8eeff;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Poppins', system-ui, sans-serif;
 }
 
 @keyframes drop {

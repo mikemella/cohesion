@@ -1,0 +1,42 @@
+<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 0.29  0 0 0 0 0.9  0 0 0 0 0.53  0 0 0 0.65 0"
+        result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background frame -->
+  <rect width="110" height="110" rx="16" fill="#0A0D18"/>
+  <rect x="3" y="3" width="104" height="104" rx="13" fill="none" stroke="#1A3028" stroke-width="1" stroke-dasharray="5 3"/>
+
+  <!-- Row 0: all green (top bar of C) -->
+  <rect x="9" y="9" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="34" y="9" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="59" y="9" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="84" y="9" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+
+  <!-- Row 1: green spine, purple interior -->
+  <rect x="9"  y="34" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="34" y="34" width="22" height="22" rx="3" fill="#5A1F8A"/>
+  <rect x="59" y="34" width="22" height="22" rx="3" fill="#4A1878"/>
+  <rect x="84" y="34" width="22" height="22" rx="3" fill="#3D1566"/>
+
+  <!-- Row 2: green spine, purple interior -->
+  <rect x="9"  y="59" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="34" y="59" width="22" height="22" rx="3" fill="#4A1878"/>
+  <rect x="59" y="59" width="22" height="22" rx="3" fill="#3D1566"/>
+  <rect x="84" y="59" width="22" height="22" rx="3" fill="#311255"/>
+
+  <!-- Row 3: all green (bottom bar of C) -->
+  <rect x="9"  y="84" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="34" y="84" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="59" y="84" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+  <rect x="84" y="84" width="22" height="22" rx="3" fill="#4AE688" filter="url(#glow)"/>
+</svg>

@@ -5,6 +5,7 @@ import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS, checkTTTWin, TIC_TAC_TO
 import { Board } from '../components/Board';
 import { TicTacToeBoard } from '../components/TicTacToeBoard';
 import { DotsBoard } from '../components/DotsBoard';
+import { LogoMark } from '../components/Logo';
 import { api } from '../services/api';
 import { connectSocket, getSocket } from '../services/socket';
 
@@ -74,9 +75,9 @@ export function GamePage() {
     socket.on('moveMade', ({ game: updatedGame }) => {
       setGame(updatedGame);
       if (myPlayer && updatedGame.currentTurn === myPlayer && Notification.permission === 'granted') {
-        new Notification("It's your turn!", {
-          body: 'Your opponent made a move. Go play!',
-          icon: '/favicon.ico',
+        new Notification('Your move.', {
+          body: 'Your opponent made their move — go play!',
+          icon: '/favicon.svg',
         });
       }
     });
@@ -84,9 +85,9 @@ export function GamePage() {
     socket.on('gameUpdated', (updatedGame) => {
       setGame(updatedGame);
       if (myPlayer && updatedGame.currentTurn === myPlayer && Notification.permission === 'granted') {
-        new Notification("It's your turn!", {
-          body: 'Your opponent made a move. Go play!',
-          icon: '/favicon.ico',
+        new Notification('Your move.', {
+          body: 'Your opponent made their move — go play!',
+          icon: '/favicon.svg',
         });
       }
     });
@@ -213,10 +214,10 @@ export function GamePage() {
             <button
               type="submit"
               disabled={joining || !joinName.trim()}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:text-slate-400
-                         rounded-lg font-semibold text-lg transition-colors"
+              className="w-full py-3 bg-[#4AE688] hover:bg-[#3DD677] disabled:bg-[#4AE688]/30 disabled:text-[#0D1120]/40
+                         text-[#0D1120] rounded-lg font-semibold text-lg transition-colors"
             >
-              {joining ? 'Joining...' : 'Join Game'}
+              {joining ? 'Joining...' : 'Accept challenge'}
             </button>
           </form>
         </div>
@@ -258,16 +259,17 @@ export function GamePage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <button
         onClick={() => navigate('/')}
-        className="absolute top-4 left-4 text-slate-400 hover:text-white transition-colors"
+        className="absolute top-4 left-4 transition-opacity hover:opacity-70"
+        aria-label="Home"
       >
-        &larr; Home
+        <LogoMark size={32} />
       </button>
 
       {/* Status Banner */}
       <div className="mb-6 text-center">
         {isWaiting && (
           <div className="bg-slate-800 rounded-lg px-6 py-4 space-y-3">
-            <p className="text-lg text-slate-300">Waiting for opponent to join...</p>
+            <p className="text-lg text-slate-300">Waiting for someone to accept...</p>
             <div className="flex items-center gap-2 justify-center">
               <input
                 type="text"
@@ -277,12 +279,12 @@ export function GamePage() {
               />
               <button
                 onClick={handleCopyLink}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-[#4AE688] hover:bg-[#3DD677] text-[#0D1120] rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
               >
-                {copied ? 'Copied!' : 'Copy Link'}
+                {copied ? 'Copied!' : 'Send the challenge'}
               </button>
             </div>
-            <p className="text-xs text-slate-500">Share this link with a friend to start playing</p>
+            <p className="text-xs text-slate-500">Share this link to start playing</p>
           </div>
         )}
 
@@ -294,10 +296,10 @@ export function GamePage() {
                   {game.currentTurn === 1 ? game.player1Name : game.player2Name}'s turn
                 </span>
               ) : isMyTurn ? (
-                <span className="text-green-400">Your turn!{game.gameType === 'dots' && isMyTurn && game.currentTurn === myPlayer ? '' : ''}</span>
+                <span className="text-[#4AE688]">Your move.</span>
               ) : (
                 <span className="text-slate-300">
-                  Waiting for {opponentName || 'opponent'}...
+                  Waiting on {opponentName || 'opponent'}...
                 </span>
               )}
             </p>
@@ -313,15 +315,15 @@ export function GamePage() {
           }`}>
             <p className="text-xl font-bold">
               {game.isDraw ? (
-                <span className="text-slate-300">It's a draw!</span>
+                <span className="text-slate-300">Nobody wins. Nobody loses. Play again.</span>
               ) : !myPlayer ? (
                 <span className="text-slate-300">
                   {game.winner === 1 ? game.player1Name : game.player2Name} wins!
                 </span>
               ) : game.winner === myPlayer ? (
-                <span className="text-green-400">You won!</span>
+                <span className="text-[#4AE688]">GG. You win.</span>
               ) : (
-                <span className="text-red-400">You lost!</span>
+                <span className="text-red-400">Rough. Rematch?</span>
               )}
             </p>
           </div>
@@ -338,7 +340,7 @@ export function GamePage() {
               key={pNum}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                 game.currentTurn === pNum && !isGameOver
-                  ? 'bg-slate-700 ring-2 ring-blue-500'
+                  ? 'bg-slate-700 ring-2 ring-[#4AE688]'
                   : 'bg-slate-800'
               }`}
             >
@@ -405,9 +407,9 @@ export function GamePage() {
         ) : (
           <button
             onClick={() => navigate('/')}
-            className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+            className="mt-6 px-6 py-2 bg-[#4AE688] hover:bg-[#3DD677] text-[#0D1120] rounded-lg font-medium transition-colors"
           >
-            New Game
+            Play again
           </button>
         )
       )}

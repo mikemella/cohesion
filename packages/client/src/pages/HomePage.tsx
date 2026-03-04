@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GameType, TournamentFormat } from '@cohesion/shared';
 import { api } from '../services/api';
+import { Logo } from '../components/Logo';
 
 interface GameInfo {
   type: GameType;
@@ -108,8 +109,12 @@ export function HomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-3xl">
         <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold text-white mb-3">Cohesion</h1>
-          <p className="text-slate-400 text-lg">Workplace Gaming Platform</p>
+          <div className="flex justify-center mb-4">
+            <Logo size={52} />
+          </div>
+          <p className="text-[#4AE688] text-xs tracking-[0.25em] uppercase" style={{ fontFamily: "'Space Mono', monospace" }}>
+            Your team. Your move.
+          </p>
         </div>
 
         {!selectedGame ? (
@@ -120,13 +125,13 @@ export function HomePage() {
                 <button
                   key={game.type}
                   onClick={() => handleSelectGame(game.type)}
-                  className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-blue-500
-                             rounded-xl p-6 text-left transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10"
+                  className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-[#4AE688]
+                             rounded-xl p-6 text-left transition-all duration-200 hover:shadow-lg hover:shadow-[#4AE688]/10"
                 >
                   <div className="flex justify-center mb-4">
                     {game.preview}
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                  <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-[#4AE688] transition-colors">
                     {game.name}
                   </h3>
                   <p className="text-slate-400 text-sm">{game.description}</p>
@@ -158,8 +163,8 @@ export function HomePage() {
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">⚔️</div>
                     <div>
-                      <div className="font-semibold text-white text-lg">Play 1v1</div>
-                      <div className="text-slate-400 text-sm">Quick match — challenge a friend</div>
+                      <div className="font-semibold text-white text-lg">Challenge someone</div>
+                      <div className="text-slate-400 text-sm">Quick match. No mercy.</div>
                     </div>
                   </div>
                 </button>
@@ -171,8 +176,8 @@ export function HomePage() {
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">🏆</div>
                     <div>
-                      <div className="font-semibold text-white text-lg">Create Tournament</div>
-                      <div className="text-slate-400 text-sm">Invite multiple players — build a bracket</div>
+                      <div className="font-semibold text-white text-lg">Start a bracket</div>
+                      <div className="text-slate-400 text-sm">Invite the squad. Build the bracket.</div>
                     </div>
                   </div>
                 </button>
@@ -195,8 +200,8 @@ export function HomePage() {
                 <button
                   type="submit"
                   disabled={creating || !playerName.trim()}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:text-slate-400
-                             rounded-lg font-semibold text-lg transition-colors"
+                  className="w-full py-3 bg-[#4AE688] hover:bg-[#3DD677] disabled:bg-[#4AE688]/30 disabled:text-[#0D1120]/40
+                             text-[#0D1120] rounded-lg font-semibold text-lg transition-colors"
                 >
                   {creating ? 'Creating...' : 'Start Game'}
                 </button>
