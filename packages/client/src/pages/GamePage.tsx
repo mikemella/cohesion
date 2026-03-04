@@ -269,7 +269,7 @@ export function GamePage() {
       <div className="mb-6 text-center">
         {isWaiting && (
           <div className="bg-slate-800 rounded-lg px-6 py-4 space-y-3">
-            <p className="text-lg text-slate-300">Waiting for someone to accept...</p>
+            <p className="text-lg text-slate-300">Challenge sent. They'll blink first.</p>
             <div className="flex items-center gap-2 justify-center">
               <input
                 type="text"

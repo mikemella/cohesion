@@ -10,6 +10,9 @@ interface GameInfo {
   description: string;
   players: string;
   preview: React.ReactNode;
+  accentBorder: string;
+  accentShadow: string;
+  accentText: string;
 }
 
 const GAMES: GameInfo[] = [
@@ -19,6 +22,9 @@ const GAMES: GameInfo[] = [
     description: 'Classic X and O — get three in a row to win',
     players: '2 players',
     preview: <TicTacToePreview />,
+    accentBorder: 'hover:border-blue-400',
+    accentShadow: 'hover:shadow-blue-400/25',
+    accentText: 'group-hover:text-blue-400',
   },
   {
     type: 'connect-four',
@@ -26,6 +32,9 @@ const GAMES: GameInfo[] = [
     description: 'Drop pieces and connect four in a row to win',
     players: '2 players',
     preview: <ConnectFourPreview />,
+    accentBorder: 'hover:border-rose-400',
+    accentShadow: 'hover:shadow-rose-400/25',
+    accentText: 'group-hover:text-rose-400',
   },
   {
     type: 'dots',
@@ -33,6 +42,9 @@ const GAMES: GameInfo[] = [
     description: 'Draw lines to claim boxes — most boxes wins',
     players: '2 players',
     preview: <DotsPreview />,
+    accentBorder: 'hover:border-[#4AE688]',
+    accentShadow: 'hover:shadow-[#4AE688]/25',
+    accentText: 'group-hover:text-[#4AE688]',
   },
 ];
 
@@ -106,32 +118,60 @@ export function HomePage() {
   const selectedInfo = GAMES.find(g => g.type === selectedGame);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-3xl">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Mesh gradient background — two color pools */}
+      <div
+        className="absolute inset-0 pointer-events-none select-none"
+        style={{ background: 'radial-gradient(ellipse 55% 45% at 12% 30%, rgba(74,230,136,0.13) 0%, transparent 60%)' }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none select-none"
+        style={{ background: 'radial-gradient(ellipse 50% 40% at 88% 70%, rgba(124,58,237,0.13) 0%, transparent 60%)' }}
+      />
+      <div className="w-full max-w-3xl relative">
         <div className="text-center mb-10">
-          <div className="flex justify-center mb-4">
-            <Logo size={52} />
+          <div className="flex justify-center mb-5 relative">
+            {/* Logo glow halo */}
+            <div
+              className="absolute inset-0 blur-2xl scale-150 pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(74,230,136,0.22) 0%, transparent 70%)' }}
+            />
+            <Logo size={52} animate />
           </div>
-          <p className="text-[#4AE688] text-xs tracking-[0.25em] uppercase" style={{ fontFamily: "'Space Mono', monospace" }}>
-            Games for groups
-          </p>
+          {!selectedGame && (
+            <>
+              <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white leading-none mt-2 mb-3">
+                Your team.<br />
+                <span className="text-gradient-brand">Your move.</span>
+              </h1>
+              <p className="text-slate-500 text-xs tracking-[0.22em] uppercase mt-4" style={{ fontFamily: "'Space Mono', monospace" }}>
+                Ranked: Slack Edition.
+              </p>
+            </>
+          )}
+          {selectedGame && (
+            <p className="text-[#4AE688] text-xs tracking-[0.25em] uppercase mt-1" style={{ fontFamily: "'Space Mono', monospace" }}>
+              Games for groups
+            </p>
+          )}
         </div>
 
         {!selectedGame ? (
           <>
-            <h2 className="text-xl font-semibold text-slate-300 text-center mb-6">Choose a game</h2>
+            <h2 className="text-lg font-semibold text-slate-400 text-center mb-6 tracking-wide">Choose a game</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {GAMES.map((game) => (
                 <button
                   key={game.type}
                   onClick={() => handleSelectGame(game.type)}
-                  className="group bg-surface hover:bg-surface-hover border border-border hover:border-[#4AE688]
-                             rounded-xl p-6 text-left transition-all duration-200 hover:shadow-lg hover:shadow-[#4AE688]/10"
+                  className={`group border border-border ${game.accentBorder} rounded-xl p-6 text-left
+                             transition-all duration-200 hover:shadow-xl ${game.accentShadow} hover:-translate-y-1`}
+                  style={{ background: 'linear-gradient(160deg, #1d1a38 0%, #12102a 100%)' }}
                 >
                   <div className="flex justify-center mb-4">
                     {game.preview}
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-[#4AE688] transition-colors">
+                  <h3 className={`text-lg font-semibold text-white mb-1 ${game.accentText} transition-colors`}>
                     {game.name}
                   </h3>
                   <p className="text-slate-400 text-sm">{game.description}</p>
@@ -177,7 +217,7 @@ export function HomePage() {
                     <div className="text-2xl">🏆</div>
                     <div>
                       <div className="font-semibold text-white text-lg">Start a bracket</div>
-                      <div className="text-slate-400 text-sm">Invite the squad. Build the bracket.</div>
+                      <div className="text-slate-400 text-sm">Build the bracket. One survives.</div>
                     </div>
                   </div>
                 </button>
