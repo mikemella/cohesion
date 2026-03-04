@@ -113,7 +113,7 @@ export function HomePage() {
             <Logo size={52} />
           </div>
           <p className="text-[#4AE688] text-xs tracking-[0.25em] uppercase" style={{ fontFamily: "'Space Mono', monospace" }}>
-            Your team. Your move.
+            Games for groups
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export function HomePage() {
                 <button
                   key={game.type}
                   onClick={() => handleSelectGame(game.type)}
-                  className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-[#4AE688]
+                  className="group bg-surface hover:bg-surface-hover border border-border hover:border-[#4AE688]
                              rounded-xl p-6 text-left transition-all duration-200 hover:shadow-lg hover:shadow-[#4AE688]/10"
                 >
                   <div className="flex justify-center mb-4">
@@ -157,7 +157,7 @@ export function HomePage() {
               <div className="space-y-3">
                 <button
                   onClick={() => setSelectedMode('1v1')}
-                  className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500
+                  className="w-full bg-surface hover:bg-surface-hover border border-border hover:border-blue-500
                              rounded-xl p-5 text-left transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ export function HomePage() {
                 </button>
                 <button
                   onClick={() => setSelectedMode('tournament')}
-                  className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-purple-500
+                  className="w-full bg-surface hover:bg-surface-hover border border-border hover:border-purple-500
                              rounded-xl p-5 text-left transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
@@ -183,14 +183,14 @@ export function HomePage() {
                 </button>
               </div>
             ) : selectedMode === '1v1' ? (
-              <form onSubmit={handleCreate1v1} className="bg-slate-800 rounded-xl p-6 space-y-4">
+              <form onSubmit={handleCreate1v1} className="bg-surface rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-center">Enter Your Name</h3>
                 <input
                   type="text"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="Your display name"
-                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white
+                  className="w-full px-4 py-3 bg-surface-deep border border-border rounded-lg text-white
                              focus:outline-none focus:border-blue-500 text-center text-lg"
                   autoFocus
                   maxLength={50}
@@ -207,7 +207,7 @@ export function HomePage() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleCreateTournament} className="bg-slate-800 rounded-xl p-6 space-y-4">
+              <form onSubmit={handleCreateTournament} className="bg-surface rounded-xl p-6 space-y-4">
                 <h3 className="text-lg font-semibold text-center">Create Tournament</h3>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Tournament Name</label>
@@ -216,7 +216,7 @@ export function HomePage() {
                     value={tournamentName}
                     onChange={(e) => setTournamentName(e.target.value)}
                     placeholder="e.g. Friday Office Cup"
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white
+                    className="w-full px-4 py-3 bg-surface-deep border border-border rounded-lg text-white
                                focus:outline-none focus:border-purple-500 text-lg"
                     autoFocus
                     maxLength={100}
@@ -230,7 +230,7 @@ export function HomePage() {
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
                     placeholder="Your display name"
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white
+                    className="w-full px-4 py-3 bg-surface-deep border border-border rounded-lg text-white
                                focus:outline-none focus:border-purple-500 text-lg"
                     maxLength={50}
                     required
@@ -247,7 +247,7 @@ export function HomePage() {
                         className={`py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
                           tournamentFormat === fmt
                             ? 'bg-purple-600 border-purple-500 text-white'
-                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                            : 'bg-surface-deep border-border text-slate-400 hover:border-slate-500'
                         }`}
                       >
                         {fmt === 'single-elimination' ? 'Single Elim' : 'Double Elim'}
@@ -291,7 +291,7 @@ function TicTacToePreview() {
       {preview.flat().map((cell, i) => (
         <div
           key={i}
-          className="bg-slate-900 border border-slate-700 rounded-sm flex items-center justify-center text-xs font-bold"
+          className="bg-surface-deep border border-border rounded-sm flex items-center justify-center text-xs font-bold"
         >
           {cell === 1 && <span className="text-blue-400">X</span>}
           {cell === 2 && <span className="text-rose-400">O</span>}
@@ -317,7 +317,7 @@ function ConnectFourPreview() {
           <div
             key={i}
             className={`w-3.5 h-3.5 rounded-full ${
-              cell === 0 ? 'bg-slate-900' : cell === 1 ? 'bg-red-500' : 'bg-yellow-400'
+              cell === 0 ? 'bg-surface-deep' : cell === 1 ? 'bg-red-500' : 'bg-yellow-400'
             }`}
           />
         ))}

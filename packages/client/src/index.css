@@ -4,6 +4,10 @@
   --color-brand: #4AE688;
   --color-brand-hover: #3DD677;
   --color-brand-dim: rgba(74, 230, 136, 0.1);
+  --color-surface: #1a1630;
+  --color-surface-hover: #211845;
+  --color-surface-deep: #100e22;
+  --color-border: #2a2245;
 }
 
 body {
