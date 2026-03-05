@@ -1,29 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #4AE688;
-  --color-brand-hover: #3DD677;
-  --color-brand-dim: rgba(74, 230, 136, 0.1);
-  --color-surface: #1a1630;
-  --color-surface-hover: #211845;
-  --color-surface-deep: #100e22;
-  --color-border: #2a2245;
+  --color-brand: #B4F042;
+  --color-brand-hover: #A0DC30;
+  --color-brand-dim: rgba(180, 240, 66, 0.1);
+  --color-surface: #111111;
+  --color-surface-hover: #1a1a1a;
+  --color-surface-deep: #0a0a0a;
+  --color-border: #222222;
   /* Game accent colors */
   --color-game-ttt: #3B82F6;
   --color-game-c4: #F43F5E;
-  --color-game-dots: #4AE688;
+  --color-game-dots: #B4F042;
   /* Tournament */
   --color-tournament: #7C3AED;
 }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #0c0b1a;
-  color: #e8eeff;
+  background-color: #080808;
+  color: #f0f0f0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
 }
 
 @keyframes drop {
@@ -48,7 +52,7 @@ h1, h2, h3, h4 {
 
 /* Gradient text utility */
 .text-gradient-brand {
-  background: linear-gradient(135deg, #4AE688 0%, #00C4FF 100%);
+  background: linear-gradient(135deg, #B4F042 0%, #78F0C8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

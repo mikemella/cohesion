@@ -122,11 +122,11 @@ export function HomePage() {
       {/* Mesh gradient background — two color pools */}
       <div
         className="absolute inset-0 pointer-events-none select-none"
-        style={{ background: 'radial-gradient(ellipse 55% 45% at 12% 30%, rgba(74,230,136,0.13) 0%, transparent 60%)' }}
+        style={{ background: 'radial-gradient(ellipse 55% 45% at 12% 30%, rgba(180,240,66,0.10) 0%, transparent 60%)' }}
       />
       <div
         className="absolute inset-0 pointer-events-none select-none"
-        style={{ background: 'radial-gradient(ellipse 50% 40% at 88% 70%, rgba(124,58,237,0.13) 0%, transparent 60%)' }}
+        style={{ background: 'radial-gradient(ellipse 50% 40% at 88% 70%, rgba(80,40,160,0.08) 0%, transparent 60%)' }}
       />
       <div className="w-full max-w-3xl relative">
         <div className="text-center mb-10">
@@ -134,23 +134,20 @@ export function HomePage() {
             {/* Logo glow halo */}
             <div
               className="absolute inset-0 blur-2xl scale-150 pointer-events-none"
-              style={{ background: 'radial-gradient(circle, rgba(74,230,136,0.22) 0%, transparent 70%)' }}
+              style={{ background: 'radial-gradient(circle, rgba(180,240,66,0.18) 0%, transparent 70%)' }}
             />
             <Logo size={52} animate />
           </div>
           {!selectedGame && (
             <>
               <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white leading-none mt-2 mb-3">
-                Your team.<br />
-                <span className="text-gradient-brand">Your move.</span>
+                <span className="text-gradient-brand">Play games</span><br />
+                together.
               </h1>
-              <p className="text-slate-500 text-xs tracking-[0.22em] uppercase mt-4" style={{ fontFamily: "'Space Mono', monospace" }}>
-                Ranked: Slack Edition.
-              </p>
             </>
           )}
           {selectedGame && (
-            <p className="text-[#4AE688] text-xs tracking-[0.25em] uppercase mt-1" style={{ fontFamily: "'Space Mono', monospace" }}>
+            <p className="text-[#B4F042] text-xs tracking-[0.25em] uppercase mt-1" style={{ fontFamily: "'Space Mono', monospace" }}>
               Games for groups
             </p>
           )}
@@ -164,9 +161,8 @@ export function HomePage() {
                 <button
                   key={game.type}
                   onClick={() => handleSelectGame(game.type)}
-                  className={`group border border-border ${game.accentBorder} rounded-xl p-6 text-left
+                  className={`group bg-surface border border-border ${game.accentBorder} rounded-xl p-6 text-left
                              transition-all duration-200 hover:shadow-xl ${game.accentShadow} hover:-translate-y-1`}
-                  style={{ background: 'linear-gradient(160deg, #1d1a38 0%, #12102a 100%)' }}
                 >
                   <div className="flex justify-center mb-4">
                     {game.preview}
@@ -240,8 +236,8 @@ export function HomePage() {
                 <button
                   type="submit"
                   disabled={creating || !playerName.trim()}
-                  className="w-full py-3 bg-[#4AE688] hover:bg-[#3DD677] disabled:bg-[#4AE688]/30 disabled:text-[#0D1120]/40
-                             text-[#0D1120] rounded-lg font-semibold text-lg transition-colors"
+                  className="w-full py-3 bg-[#B4F042] hover:bg-[#A0DC30] disabled:bg-[#B4F042]/30 disabled:text-[#080808]/40
+                             text-[#080808] rounded-lg font-semibold text-lg transition-colors"
                 >
                   {creating ? 'Creating...' : 'Start Game'}
                 </button>
