@@ -144,6 +144,9 @@ export function HomePage() {
                 <span className="text-gradient-brand">Play games</span><br />
                 together.
               </h1>
+              <p className="text-slate-400 text-base mt-3">
+                Create tournaments and compete playing iconic games.
+              </p>
             </>
           )}
           {selectedGame && (
@@ -200,7 +203,7 @@ export function HomePage() {
                     <div className="text-2xl">⚔️</div>
                     <div>
                       <div className="font-semibold text-white text-lg">Challenge someone</div>
-                      <div className="text-slate-400 text-sm">Quick match. No mercy.</div>
+                      <div className="text-slate-400 text-sm">Share a link with a coworker. They join instantly.</div>
                     </div>
                   </div>
                 </button>
