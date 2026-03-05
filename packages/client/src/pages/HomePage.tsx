@@ -46,6 +46,26 @@ const GAMES: GameInfo[] = [
     accentShadow: 'hover:shadow-[#4AE688]/25',
     accentText: 'group-hover:text-[#4AE688]',
   },
+  {
+    type: 'battleship',
+    name: 'Battleship',
+    description: 'Place your fleet. Hunt theirs. Sink all 5 ships to win',
+    players: '2 players',
+    preview: <BattleshipPreview />,
+    accentBorder: 'hover:border-sky-400',
+    accentShadow: 'hover:shadow-sky-400/25',
+    accentText: 'group-hover:text-sky-400',
+  },
+  {
+    type: 'word-hunt',
+    name: 'Word Hunt',
+    description: 'Find words in the grid — longest list wins in 80 seconds',
+    players: '2 players',
+    preview: <WordHuntPreview />,
+    accentBorder: 'hover:border-amber-400',
+    accentShadow: 'hover:shadow-amber-400/25',
+    accentText: 'group-hover:text-amber-400',
+  },
 ];
 
 type GameMode = '1v1' | 'tournament';
@@ -361,6 +381,65 @@ function ConnectFourPreview() {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function BattleshipPreview() {
+  // 5x5 mini grid showing a ship + some hits/misses
+  const grid = Array(5).fill(null).map(() => Array(5).fill(0));
+  // A small ship at row 1, cols 1-3
+  const shipCells = new Set(['1,1', '1,2', '1,3']);
+  const hitCells = new Set(['1,2']); // hit on the ship
+  const missCells = new Set(['0,3', '3,1']); // misses
+
+  return (
+    <div className="bg-slate-800 p-1 rounded-md border border-slate-600">
+      <div className="flex flex-col gap-px">
+        {grid.map((row, r) => (
+          <div key={r} className="flex gap-px">
+            {row.map((_: number, c: number) => {
+              const key = `${r},${c}`;
+              const isShip = shipCells.has(key);
+              const isHit = hitCells.has(key);
+              const isMiss = missCells.has(key);
+              return (
+                <div
+                  key={c}
+                  className={`w-3.5 h-3.5 rounded-sm flex items-center justify-center ${
+                    isHit ? 'bg-orange-500' :
+                    isShip ? 'bg-sky-600' :
+                    isMiss ? 'bg-slate-600' :
+                    'bg-slate-900'
+                  }`}
+                >
+                  {isMiss && <div className="w-1 h-1 rounded-full bg-slate-400" />}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WordHuntPreview() {
+  const letters = ['C','A','T','S','R','I','N','E','G','O','L','D','P','H','W','M'];
+  const highlighted = new Set([0, 1, 2, 3]); // C-A-T-S path
+
+  return (
+    <div className="grid grid-cols-4 gap-0.5 w-20 h-20">
+      {letters.map((l, i) => (
+        <div
+          key={i}
+          className={`rounded-sm flex items-center justify-center text-[9px] font-bold ${
+            highlighted.has(i) ? 'bg-amber-400 text-slate-900' : 'bg-surface-deep text-slate-400'
+          }`}
+        >
+          {l}
+        </div>
+      ))}
     </div>
   );
 }

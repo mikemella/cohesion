@@ -1,10 +1,10 @@
 // ---- Game Types ----
 
-export type GameType = 'connect-four' | 'tic-tac-toe' | 'dots';
+export type GameType = 'connect-four' | 'tic-tac-toe' | 'dots' | 'battleship' | 'word-hunt';
 
 export type GameStatus = 'waiting' | 'active' | 'completed' | 'abandoned';
 
-export type GameState = ConnectFourState | TicTacToeState | DotsState;
+export type GameState = ConnectFourState | TicTacToeState | DotsState | BattleshipState | WordHuntState;
 
 export interface Game {
   id: string;
@@ -67,6 +67,74 @@ export interface DotsState {
   boxes: (0 | 1 | 2)[][];      // (DOTS_GRID_SIZE-1) × (DOTS_GRID_SIZE-1)
   scores: [number, number];     // [player1, player2]
   currentPlayer: 1 | 2;
+}
+
+// ---- Battleship ----
+
+export const BATTLESHIP_GRID_SIZE = 10;
+export const BATTLESHIP_TOTAL_SHIP_CELLS = 17; // 5+4+3+3+2
+
+export type BattleshipPhase = 'placing' | 'playing';
+
+// 0 = unknown/empty, 1 = miss, 2 = hit
+export type ShotCell = 0 | 1 | 2;
+
+export type BattleshipShipId = 'carrier' | 'battleship' | 'cruiser' | 'submarine' | 'destroyer';
+
+export interface BattleshipShip {
+  id: BattleshipShipId;
+  size: number;
+  row: number;
+  col: number;
+  direction: 'h' | 'v';
+}
+
+export interface BattleshipState {
+  phase: BattleshipPhase;
+  shots1: ShotCell[][]; // shots BY player1 at player2's grid (10x10)
+  shots2: ShotCell[][]; // shots BY player2 at player1's grid (10x10)
+  sunkShips1: BattleshipShip[]; // player1's ships that have been sunk (safe to reveal)
+  sunkShips2: BattleshipShip[]; // player2's ships that have been sunk (safe to reveal)
+  player1Ready: boolean;
+  player2Ready: boolean;
+  currentPlayer: 1 | 2;
+  hits1: number; // hits by player1 on player2's fleet
+  hits2: number; // hits by player2 on player1's fleet
+}
+
+// ---- Word Hunt ----
+
+export const WORD_HUNT_GRID_SIZE = 4; // 4x4 = 16 cells
+export const WORD_HUNT_DURATION_SECONDS = 80;
+
+export const WORD_HUNT_SCORES: Record<number, number> = {
+  3: 100,
+  4: 400,
+  5: 800,
+  6: 1400,
+  7: 1800,
+};
+export const WORD_HUNT_SCORE_MAX = 2200; // 8+ letters
+
+export interface WordHuntFoundWord {
+  word: string;
+  path: number[]; // flat cell indices 0-15
+  score: number;
+}
+
+export interface WordHuntPlayerResult {
+  words: WordHuntFoundWord[];
+  totalScore: number;
+  submittedAt: string | null; // null = not yet submitted
+}
+
+export interface WordHuntState {
+  grid: string[]; // 16 letters, row-major (index = row*4 + col)
+  player1: WordHuntPlayerResult;
+  player2: WordHuntPlayerResult;
+  player1StartedAt: string | null; // set when player 1 clicks "Start my turn"
+  player2StartedAt: string | null; // set when player 2 clicks "Start my turn"
+  currentPlayer: 1 | 2; // repurposed: tracks submission flow
 }
 
 // ---- API Types ----

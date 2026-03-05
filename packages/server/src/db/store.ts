@@ -1,9 +1,29 @@
 import { randomUUID } from 'crypto';
-import type { Game, Move, GameType, GameState } from '@cohesion/shared';
+import type { Game, Move, GameType, GameState, BattleshipShip } from '@cohesion/shared';
 
 // In-memory game storage — no database required
 const games = new Map<string, Game>();
 const moves = new Map<string, Move[]>(); // gameId -> moves
+
+// Private Battleship ship placements — never serialized into Game objects
+const shipPlacements = new Map<string, { player1: BattleshipShip[] | null; player2: BattleshipShip[] | null }>();
+
+export function initBattleshipPlacements(gameId: string): void {
+  shipPlacements.set(gameId, { player1: null, player2: null });
+}
+
+export function saveBattleshipPlacement(gameId: string, playerNumber: 1 | 2, ships: BattleshipShip[]): void {
+  const existing = shipPlacements.get(gameId) ?? { player1: null, player2: null };
+  if (playerNumber === 1) {
+    shipPlacements.set(gameId, { ...existing, player1: ships });
+  } else {
+    shipPlacements.set(gameId, { ...existing, player2: ships });
+  }
+}
+
+export function getBattleshipPlacements(gameId: string): { player1: BattleshipShip[] | null; player2: BattleshipShip[] | null } | null {
+  return shipPlacements.get(gameId) ?? null;
+}
 
 export function createGame(playerName: string, gameType: GameType, initialState: GameState): Game {
   const now = new Date().toISOString();
@@ -22,6 +42,9 @@ export function createGame(playerName: string, gameType: GameType, initialState:
   };
   games.set(game.id, game);
   moves.set(game.id, []);
+  if (gameType === 'battleship') {
+    initBattleshipPlacements(game.id);
+  }
   return game;
 }
 

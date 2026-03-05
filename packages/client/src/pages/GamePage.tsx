@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import type { Game, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
+import type { Game, ConnectFourState, TicTacToeState, DotsState, BattleshipState, BattleshipShip, WordHuntState } from '@cohesion/shared';
 import { checkWin, CONNECT_FOUR_ROWS, CONNECT_FOUR_COLS, checkTTTWin, TIC_TAC_TOE_SIZE } from '@cohesion/shared';
 import { Board } from '../components/Board';
 import { TicTacToeBoard } from '../components/TicTacToeBoard';
 import { DotsBoard } from '../components/DotsBoard';
+import { BattleshipBoard } from '../components/BattleshipBoard';
+import { WordHuntBoard } from '../components/WordHuntBoard';
 import { LogoMark } from '../components/Logo';
 import { api } from '../services/api';
 import { connectSocket, getSocket } from '../services/socket';
@@ -13,6 +15,8 @@ const GAME_LABELS: Record<string, string> = {
   'connect-four': 'Connect Four',
   'tic-tac-toe': 'Tic-Tac-Toe',
   'dots': 'Dots & Boxes',
+  'battleship': 'Battleship',
+  'word-hunt': 'Word Hunt',
 };
 
 export function GamePage() {
@@ -32,6 +36,11 @@ export function GamePage() {
 
   // Which player am I? Stored per-game in sessionStorage
   const myPlayer = id ? Number(sessionStorage.getItem(`game:${id}:player`)) as 1 | 2 | 0 : 0;
+
+  // Battleship: my ships stored locally (never sent back from server)
+  const myShips: BattleshipShip[] = id
+    ? JSON.parse(sessionStorage.getItem(`game:${id}:ships`) ?? '[]')
+    : [];
 
   const fetchGame = useCallback(async () => {
     if (!id) return;
@@ -156,6 +165,51 @@ export function GamePage() {
     }
   };
 
+  const handleBattleshipPlacement = async (ships: BattleshipShip[]) => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.placeBattleshipFleet(id, myPlayer as 1 | 2, ships);
+      sessionStorage.setItem(`game:${id}:ships`, JSON.stringify(ships));
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleBattleshipShot = async (row: number, col: number) => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.makeMove(id, myPlayer as 1 | 2, { row, col });
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleWordHuntSubmit = async (words: Array<{ word: string; path: number[] }>) => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.makeWordHuntSubmission(id, myPlayer as 1 | 2, words);
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleWordHuntStartTurn = async () => {
+    if (!game || !id || !myPlayer) return;
+    setError('');
+    try {
+      const updatedGame = await api.startWordHuntTurn(id, myPlayer as 1 | 2);
+      setGame(updatedGame);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -225,7 +279,18 @@ export function GamePage() {
     );
   }
 
-  const isMyTurn = myPlayer ? game.currentTurn === myPlayer : false;
+  // Word Hunt: async per-player turns
+  const isWordHunt = game.gameType === 'word-hunt';
+  const wordHuntState = isWordHunt ? (game.state as WordHuntState) : null;
+  const wordHuntMyStartedAt = wordHuntState
+    ? (myPlayer === 1 ? wordHuntState.player1StartedAt : wordHuntState.player2StartedAt)
+    : null;
+  const wordHuntMySubmitted = wordHuntState
+    ? (myPlayer === 1 ? wordHuntState.player1.submittedAt !== null : wordHuntState.player2.submittedAt !== null)
+    : false;
+  const isMyTurn = isWordHunt
+    ? !wordHuntMySubmitted
+    : myPlayer ? game.currentTurn === myPlayer : false;
   const isGameOver = game.status === 'completed';
   const isWaiting = game.status === 'waiting';
 
@@ -269,7 +334,7 @@ export function GamePage() {
       <div className="mb-6 text-center">
         {isWaiting && (
           <div className="bg-slate-800 rounded-lg px-6 py-4 space-y-3">
-            <p className="text-lg text-slate-300">Challenge sent. They'll blink first.</p>
+            <p className="text-lg text-slate-300">Challenge sent.</p>
             <div className="flex items-center gap-2 justify-center">
               <input
                 type="text"
@@ -289,9 +354,17 @@ export function GamePage() {
         )}
 
         {game.status === 'active' && (
-          <div className={`rounded-lg px-6 py-3 ${isMyTurn ? 'bg-green-900/50 border border-green-700' : 'bg-slate-800'}`}>
+          <div className={`rounded-lg px-6 py-3 ${isWordHunt ? 'bg-slate-800' : isMyTurn ? 'bg-green-900/50 border border-green-700' : 'bg-slate-800'}`}>
             <p className="text-lg font-semibold">
-              {!myPlayer ? (
+              {isWordHunt ? (
+                wordHuntMySubmitted ? (
+                  <span className="text-slate-300">Words submitted — waiting for opponent...</span>
+                ) : wordHuntMyStartedAt ? (
+                  <span className="text-[#4AE688]">Find as many words as you can!</span>
+                ) : (
+                  <span className="text-slate-300">Start your turn when you're ready</span>
+                )
+              ) : !myPlayer ? (
                 <span className="text-slate-300">
                   {game.currentTurn === 1 ? game.player1Name : game.player2Name}'s turn
                 </span>
@@ -353,6 +426,11 @@ export function GamePage() {
                     — {(game.state as DotsState).scores[pNum - 1]} boxes
                   </span>
                 )}
+                {game.gameType === 'battleship' && (
+                  <span className="text-slate-400 text-sm ml-1">
+                    — {pNum === 1 ? (game.state as BattleshipState).hits1 : (game.state as BattleshipState).hits2}/17 hits
+                  </span>
+                )}
               </span>
             </div>
           );
@@ -391,6 +469,28 @@ export function GamePage() {
           myPlayerNumber={myPlayer as 1 | 2 | null || null}
           onLineClick={handleDotsMove}
           disabled={isGameOver || isWaiting || !myPlayer}
+        />
+      )}
+
+      {game.gameType === 'battleship' && (
+        <BattleshipBoard
+          state={game.state as BattleshipState}
+          myPlayerNumber={myPlayer as 1 | 2 | null || null}
+          myShips={myShips}
+          isMyTurn={isMyTurn}
+          onConfirmPlacement={handleBattleshipPlacement}
+          onShot={handleBattleshipShot}
+          disabled={isGameOver || isWaiting || !myPlayer}
+        />
+      )}
+
+      {game.gameType === 'word-hunt' && (
+        <WordHuntBoard
+          state={game.state as WordHuntState}
+          myPlayerNumber={myPlayer as 1 | 2 | null || null}
+          gameStatus={game.status}
+          onSubmit={handleWordHuntSubmit}
+          onStartTurn={handleWordHuntStartTurn}
         />
       )}
 

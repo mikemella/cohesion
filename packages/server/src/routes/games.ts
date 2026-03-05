@@ -1,13 +1,29 @@
+import { createRequire } from 'module';
 import { Router, Request, Response } from 'express';
 import {
   createInitialState, applyMove, isValidMove,
   createTTTInitialState, applyTTTMove, isTTTValidMove,
   createDotsInitialState, applyDotsMove, isDotsValidMove,
+  createBattleshipInitialState, isValidPlacement, isValidShot, applyShot,
+  createWordHuntInitialState, applyWordHuntSubmission, isSubmissionExpired,
 } from '@cohesion/shared';
-import type { GameType, ConnectFourState, TicTacToeState, DotsState } from '@cohesion/shared';
+import type {
+  GameType,
+  ConnectFourState,
+  TicTacToeState,
+  DotsState,
+  BattleshipState,
+  BattleshipShip,
+  WordHuntState,
+} from '@cohesion/shared';
 import { getIO } from '../websocket/socket.js';
 import * as store from '../db/store.js';
 import * as tournamentStore from '../db/tournament-store.js';
+
+// Load English dictionary at startup using createRequire (JSON package in ESM context)
+const _require = createRequire(import.meta.url);
+const wordList: string[] = _require('an-array-of-english-words');
+const dictionary = new Set(wordList.map((w) => w.toUpperCase()));
 
 const router = Router();
 
@@ -29,7 +45,7 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
 
-  const validTypes: GameType[] = ['connect-four', 'tic-tac-toe', 'dots'];
+  const validTypes: GameType[] = ['connect-four', 'tic-tac-toe', 'dots', 'battleship', 'word-hunt'];
   if (!validTypes.includes(gameType)) {
     res.status(400).json({ error: `Invalid gameType. Must be one of: ${validTypes.join(', ')}` });
     return;
@@ -38,7 +54,10 @@ router.post('/', async (req: Request, res: Response) => {
   const initialState =
     gameType === 'tic-tac-toe' ? createTTTInitialState() :
     gameType === 'dots' ? createDotsInitialState() :
+    gameType === 'battleship' ? createBattleshipInitialState() :
+    gameType === 'word-hunt' ? createWordHuntInitialState() :
     createInitialState();
+
   const game = store.createGame(playerName.trim(), gameType, initialState);
   res.status(201).json(game);
 });
@@ -67,6 +86,106 @@ router.post('/:id/join', async (req: Request<{ id: string }>, res: Response) => 
   res.json(game);
 });
 
+// Place Battleship fleet (separate from /move — simultaneous, data-heavy)
+router.post('/:id/place', async (req: Request<{ id: string }>, res: Response) => {
+  const gameId = req.params.id;
+  const { playerNumber, ships } = req.body;
+
+  if (playerNumber !== 1 && playerNumber !== 2) {
+    res.status(400).json({ error: 'playerNumber must be 1 or 2' });
+    return;
+  }
+
+  const game = store.getGame(gameId);
+  if (!game || game.status !== 'active') {
+    res.status(404).json({ error: 'Game not found or not active' });
+    return;
+  }
+
+  if (game.gameType !== 'battleship') {
+    res.status(400).json({ error: 'This endpoint is only for battleship games' });
+    return;
+  }
+
+  const state = game.state as BattleshipState;
+  if (state.phase !== 'placing') {
+    res.status(400).json({ error: 'Fleet has already been placed' });
+    return;
+  }
+
+  const playerReady = playerNumber === 1 ? state.player1Ready : state.player2Ready;
+  if (playerReady) {
+    res.status(400).json({ error: 'You have already placed your fleet' });
+    return;
+  }
+
+  if (!Array.isArray(ships) || !isValidPlacement(ships as BattleshipShip[])) {
+    res.status(400).json({ error: 'Invalid fleet placement' });
+    return;
+  }
+
+  store.saveBattleshipPlacement(gameId, playerNumber, ships as BattleshipShip[]);
+
+  const newState: BattleshipState = {
+    ...state,
+    player1Ready: playerNumber === 1 ? true : state.player1Ready,
+    player2Ready: playerNumber === 2 ? true : state.player2Ready,
+  };
+
+  if (newState.player1Ready && newState.player2Ready) {
+    newState.phase = 'playing';
+    newState.currentPlayer = 1;
+  }
+
+  const updatedGame = store.updateGame(gameId, { state: newState })!;
+
+  const io = getIO();
+  io.to(`game:${gameId}`).emit('gameUpdated', updatedGame);
+
+  res.json(updatedGame);
+});
+
+// Word Hunt: start a player's personal turn timer
+router.post('/:id/start-turn', async (req: Request<{ id: string }>, res: Response) => {
+  const gameId = req.params.id;
+  const { playerNumber } = req.body;
+
+  if (playerNumber !== 1 && playerNumber !== 2) {
+    res.status(400).json({ error: 'playerNumber must be 1 or 2' });
+    return;
+  }
+
+  const game = store.getGame(gameId);
+  if (!game || game.status !== 'active') {
+    res.status(404).json({ error: 'Game not found or not active' });
+    return;
+  }
+
+  if (game.gameType !== 'word-hunt') {
+    res.status(400).json({ error: 'This endpoint is only for word-hunt games' });
+    return;
+  }
+
+  const state = game.state as WordHuntState;
+  const alreadyStarted = playerNumber === 1 ? state.player1StartedAt : state.player2StartedAt;
+  if (alreadyStarted) {
+    res.status(400).json({ error: 'Turn already started' });
+    return;
+  }
+
+  const newState: WordHuntState = {
+    ...state,
+    player1StartedAt: playerNumber === 1 ? new Date().toISOString() : state.player1StartedAt,
+    player2StartedAt: playerNumber === 2 ? new Date().toISOString() : state.player2StartedAt,
+  };
+
+  const updatedGame = store.updateGame(gameId, { state: newState })!;
+  const io = getIO();
+  io.to(`game:${gameId}`).emit('gameUpdated', updatedGame);
+
+  res.json(updatedGame);
+});
+
 // Make a move
 router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => {
   const gameId = req.params.id;
@@ -83,7 +202,9 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
     return;
   }
 
-  if (game.currentTurn !== playerNumber) {
+  // Word Hunt is simultaneous — skip turn guard
+  const isTurnBased = game.gameType !== 'word-hunt';
+  if (isTurnBased && game.currentTurn !== playerNumber) {
     res.status(400).json({ error: 'Not your turn' });
     return;
   }
@@ -91,7 +212,75 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
   let result: { state: any; isWin: boolean; isDraw: boolean };
   let moveData: Record<string, number>;
 
-  if (game.gameType === 'dots') {
+  if (game.gameType === 'battleship') {
+    const { row, col } = req.body;
+    if (typeof row !== 'number' || typeof col !== 'number') {
+      res.status(400).json({ error: 'row and col are required for battleship' });
+      return;
+    }
+
+    const state = game.state as BattleshipState;
+    if (state.phase !== 'playing') {
+      res.status(400).json({ error: 'Game is still in placement phase' });
+      return;
+    }
+
+    if (!isValidShot(state, playerNumber, row, col)) {
+      res.status(400).json({ error: 'Invalid shot' });
+      return;
+    }
+
+    const placements = store.getBattleshipPlacements(gameId);
+    if (!placements) {
+      res.status(500).json({ error: 'Ship placements not found' });
+      return;
+    }
+
+    const targetShips = playerNumber === 1 ? placements.player2 : placements.player1;
+    if (!targetShips) {
+      res.status(400).json({ error: 'Opponent has not placed their fleet yet' });
+      return;
+    }
+
+    const shotResult = applyShot(state, playerNumber, row, col, targetShips);
+    result = { state: shotResult.state, isWin: shotResult.isWin, isDraw: false };
+    moveData = { row, col };
+
+  } else if (game.gameType === 'word-hunt') {
+    const { words } = req.body;
+    if (!Array.isArray(words)) {
+      res.status(400).json({ error: 'words array required for word-hunt' });
+      return;
+    }
+
+    const state = game.state as WordHuntState;
+
+    const playerResult = playerNumber === 1 ? state.player1 : state.player2;
+    if (playerResult.submittedAt !== null) {
+      res.status(400).json({ error: 'Already submitted' });
+      return;
+    }
+
+    const playerStartedAt = playerNumber === 1 ? state.player1StartedAt : state.player2StartedAt;
+    if (!playerStartedAt) {
+      res.status(400).json({ error: 'You have not started your turn yet' });
+      return;
+    }
+    if (isSubmissionExpired(playerStartedAt)) {
+      res.status(400).json({ error: 'Submission window has closed' });
+      return;
+    }
+
+    const submissionResult = applyWordHuntSubmission(state, playerNumber, words, dictionary);
+    result = submissionResult;
+    const playerRes = playerNumber === 1 ? submissionResult.state.player1 : submissionResult.state.player2;
+    moveData = {
+      playerNumber,
+      wordCount: playerRes.words.length,
+      score: playerRes.totalScore,
+    };
+
+  } else if (game.gameType === 'dots') {
     const { orientation, row, col } = req.body;
     if (typeof orientation !== 'number' || typeof row !== 'number' || typeof col !== 'number') {
       res.status(400).json({ error: 'orientation, row, and col are required for dots' });
@@ -103,15 +292,9 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
       return;
     }
     const dotsResult = applyDotsMove(state, orientation, row, col);
-    // For dots, the winner is determined by scores, not by the moving player
-    if (dotsResult.isWin) {
-      const winner = dotsResult.state.currentPlayer; // set to the winner in applyDotsMove
-      result = dotsResult;
-      // Override: the server will use the winner from result.state.currentPlayer
-    } else {
-      result = dotsResult;
-    }
+    result = dotsResult;
     moveData = { orientation, row, col };
+
   } else if (game.gameType === 'tic-tac-toe') {
     const { row, col } = req.body;
     if (typeof row !== 'number' || typeof col !== 'number') {
@@ -125,6 +308,7 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
     }
     result = applyTTTMove(state, row, col);
     moveData = { row, col };
+
   } else {
     const { column } = req.body;
     if (typeof column !== 'number') {
@@ -147,8 +331,13 @@ router.post('/:id/move', async (req: Request<{ id: string }>, res: Response) => 
 
   if (result.isWin) {
     newStatus = 'completed';
-    // For dots, the winner is the player with more boxes (stored in state.currentPlayer by applyDotsMove)
-    winner = game.gameType === 'dots' ? result.state.currentPlayer : playerNumber;
+    if (game.gameType === 'dots') {
+      winner = result.state.currentPlayer;
+    } else if (game.gameType === 'word-hunt') {
+      winner = result.state.currentPlayer; // set to winner in applyWordHuntSubmission
+    } else {
+      winner = playerNumber;
+    }
   } else if (result.isDraw) {
     newStatus = 'completed';
   }

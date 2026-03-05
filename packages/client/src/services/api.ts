@@ -64,6 +64,35 @@ export const api = {
     });
   },
 
+  placeBattleshipFleet(
+    gameId: string,
+    playerNumber: 1 | 2,
+    ships: import('@cohesion/shared').BattleshipShip[]
+  ) {
+    return request<Game>(`/games/${gameId}/place`, {
+      method: 'POST',
+      body: JSON.stringify({ playerNumber, ships }),
+    });
+  },
+
+  makeWordHuntSubmission(
+    gameId: string,
+    playerNumber: 1 | 2,
+    words: Array<{ word: string; path: number[] }>
+  ) {
+    return request<Game>(`/games/${gameId}/move`, {
+      method: 'POST',
+      body: JSON.stringify({ playerNumber, words }),
+    });
+  },
+
+  startWordHuntTurn(gameId: string, playerNumber: 1 | 2) {
+    return request<Game>(`/games/${gameId}/start-turn`, {
+      method: 'POST',
+      body: JSON.stringify({ playerNumber }),
+    });
+  },
+
   // ---- Tournament API ----
 
   createTournament(
